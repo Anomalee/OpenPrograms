@@ -1,31 +1,44 @@
-Move = {
-        parent,
-        pos,
-        children,
-        endpoints,
-        deadends
-        }
+-- 0 = south
+-- 1 = west
+-- 2 = north
+-- 3 = east
 
-function Move:new (o)
+package.path = package.path .. ";C:/Users/seven_000/zerobrane/OpenPrograms/?.lua"
+local robot = require("robot")
+local Me = {}
+local clock = os.clock
+
+Me.Move = {
+            parent,
+            pos,
+            children,
+            endpoints,
+            deadends
+            }
+
+function Me.Move:new (o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
   return o
 end
 
-function Move:addchild (child)
+function Me.Move:addchild (child)
   self.children[#self.children+1] = child
   self:addendpoint(child.pos)
 end
 
-function Move:addendpoint (endpoint)
+function Me.Move:addendpoint (endpoint)
   self.endpoints[#self.endpoints+1] = endpoint
   if self.parent then
     self.parent:addendpoint(endpoint)
   end
 end
 
-function Move:hasendpoint (point)
+function Me.Move:hasendpoint (point)
+  if not self.endpoints then
+    return false
+  end
   for _, p in pairs(self.endpoints) do
     if p.x == point.x and p.y == point.y then
       return true
@@ -34,7 +47,7 @@ function Move:hasendpoint (point)
   return false
 end
 
-Robit = {
+Me.Robit = {
           pos,
           height=1,
           direction,
@@ -47,14 +60,14 @@ Robit = {
           pathindex
         }
 
-function Robit:new (o)
+function Me.Robit:new (o)
   o = o or {}
   setmetatable(o, self)
   self.__index = self
   return o
 end
 
-function Robit:moveforward ()
+function Me.Robit:moveforward ()
   if self.direction == 0 then
     self.pos.y = self.pos.y+1
   elseif self.direction == 1 then
@@ -67,33 +80,33 @@ function Robit:moveforward ()
   robot.forward()
 end
 
-function Robit:moveup ()
+function Me.Robit:moveup ()
   self.height = self.height+1
   robot.up()
 end
 
-function Robit:movedown ()
+function Me.Robit:movedown ()
   self.height = self.height-1
   robot.down()
 end
 
-function Robit:turn_around ()
+function Me.Robit:turn_around ()
   self.direction = (self.direction+2)%4
   robot.turnAround()
 end
 
-function Robit:turn_right ()
+function Me.Robit:turn_right ()
   self.direction = (self.direction+1)%4
   robot.turnRight()
 end
 
-function Robit:turn_left ()
+function Me.Robit:turn_left ()
   self.direction = (self.direction-1)%4
   robot.turnLeft()
 end
 
-function Robit:turn_todir (targetdir)
-  if not self.direction == targetdir then
+function Me.Robit:turn_todir (targetdir)
+  if not (self.direction == targetdir) then
     if (self.direction+2)%4 == targetdir then
       self:turn_around()
     elseif (self.direction+1)%4 == targetdir then
@@ -101,15 +114,16 @@ function Robit:turn_todir (targetdir)
     else
       self:turn_left()
     end
+  else
   end
 end
 
-function Robit:turn_topos (pos)
+function Me.Robit:turn_topos (pos)
   targetdir = getdir_topos(self.pos, pos)
   self:turn_todir(targetdir)
 end
 
-function Robit:getforwardpos ()
+function Me.Robit:getforwardpos ()
   x = self.pos.x
   y = self.pos.y
   if self.direction == 0 then
@@ -124,25 +138,25 @@ function Robit:getforwardpos ()
   return {x=x, y=y}
 end
 
-function Robit:navigate(targetpos)
-  if self.pos == targetpos and self.height == 1 then
+function Me.Robit:navigate(targetpos)
+  if pointcompare(self.pos, targetpos) and self.height == 1 then
     return True
   end
   if self.height > 1 then
     self:movedown()
     return
   end
-  if not targetpos == self.targetpos or not self.prevmove then
-    thismove = Move:new{parent=self.prevmove, pos=self.pos}
+  if not pointcompare(targetpos, self.targetpos) or not self.prevmove then
+    thismove = Me.Move:new{parent=self.prevmove, pos=self.pos}
     self.startmove = thismove
     self.prevmove = nil
     self.targetpos = targetpos
   else
-    if self.pos == self.prevmove.pos then
+    if pointcompare(self.pos, self.prevmove.pos) then
       thismove = self.prevmove
       self.prevmove = self.prevmove.parent
     else
-      thismove = Move:new{parent=self.prevmove, pos=self.pos}
+      thismove = Me.Move:new{parent=self.prevmove, pos=self.pos}
       self.prevmove:addchild(thismove)
     end
   end
@@ -155,17 +169,17 @@ function Robit:navigate(targetpos)
   availchoices = {}
   choicedists = {}
   for i, c in pairs(choices) do
-    if self.startmove.hasendpoint(c) then
+    if not self.startmove.hasendpoint(c) then
       availchoices[#availchoices+1] = c
-      choicedist[#choicedist] = getdist(targetpos, c)
+      choicedists[#choicedists+1] = getdist(targetpos, c)
     end
   end
   while #availchoices > 0 do
-    choice = getindex(choicedist, math.min(choicedist))
-    self:turntopoint(availchoices[choice])
+    choice = getindex(choicedists, math.min(unpack(choicedists)))
+    self:turn_topos(availchoices[choice])
     if robot.detect() then
       availchoices[choice] = nil
-      choicedist[choice] = nil
+      choicedists[choice] = nil
     else
       break
     end
@@ -178,26 +192,41 @@ function Robit:navigate(targetpos)
   self.prevmove = thismove
 end
 
-function Robit:patrol (arg)
+function Me.Robit:patrol (arg)
   if self.patrolpath == nil then
     if arg.startpos == nil then
       startpos = self.pos
+    else
+      startpos = arg.startpos
     end
     if arg.area == nil then
       area = {w=1, h=1}
+    else
+      area = arg.area
     end
     self.patrolpath = self:buildpatrolpath(startpos, area)
     self.pathindex = 1
   end
+  if arg.n ~= nil then
+    numpatrols = 0
+    maxpatrols = arg.n
+  end
   while true do
-    if pointcompare(self.pos, self.patrolpath[1]) then
+    if pointcompare(self.pos, self.patrolpath[self.pathindex]) then
+      if numpatrols and self.pathindex == 1 then
+        if numpatrols >= maxpatrols then
+          break
+        end
+        numpatrols = numpatrols+1
+      end
       self.pathindex = (self.pathindex)%(#self.patrolpath)+1
     end
     self:navigate(self.patrolpath[self.pathindex])
+    sleep(1)
   end
 end
 
-function Robit:buildpatrolpath (startpos, area)
+function Me.Robit:buildpatrolpath (startpos, area)
   x0 = startpos.x
   y0 = startpos.y
   w = area.w
@@ -274,6 +303,9 @@ function Robit:buildpatrolpath (startpos, area)
 end
 
 function pointcompare (p1, p2)
+  if p1 == nil or p2 == nil then
+    return false
+  end
   return (p1.x == p2.x) and (p1.y == p2.y)
 end
 
@@ -314,8 +346,8 @@ function getindex (t, val)
 end
 
 function getdir_topos (p1, p2)
-  xdist = p2[1]-p1[1]
-  ydist = p2[2]-p1[2]
+  xdist = p2.x-p1.x
+  ydist = p2.y-p1.y
   if xdist == 0 and ydist == 0 then
     return false
   end
@@ -333,3 +365,15 @@ function getdir_topos (p1, p2)
     end
   end
 end
+
+function sleep(n)
+  local t0 = clock()
+  while clock()-t0 <= n do end
+end
+
+function Me.dopatrol (direction, area, n)
+  rbt = Me.Robit:new{pos={x=0, y=0}, direction=direction}
+  rbt:patrol{area=area, n=n}
+end
+
+return Me
