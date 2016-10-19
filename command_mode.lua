@@ -9,7 +9,7 @@ print("Enter y pos: ")
 y = tonumber(io.read())
 rbt = rs.Robit:new{dir=dir, pos={x=x, y=y}}
 while true do
-  print("Awaiting command: ")
+  print("Awaiting command (patrol, moveto, choptree, quit): ")
   s = io.read()
   print(s)
   if s == "patrol" then
@@ -23,7 +23,7 @@ while true do
     print("Enter patrol width (y): ")
     w = tonumber(io.read())
     area = {l=l, w=w}
-    print("Mode (trees, or none)")
+    print("Mode (trees, none)")
     mode = io.read()
     print("Enter patrol count (0 for infinite): ")
     n = tonumber(io.read())
@@ -46,5 +46,8 @@ while true do
     while rbt.treepos do
       rbt:choptree()
     end
+  end
+  if s == "quit" then
+    break
   end
 end
