@@ -35,4 +35,14 @@ while true do
     pos = {x=x, y=y}
     rbt:moveto(pos)
   end
+  if s == "choptree" then
+    print("Enter tree x: ")
+    x = tonumber(io.read())
+    print("Enter tree y: ")
+    y = tonumber(io.read())
+    rbt.treepos = {x=x, y=y}
+    while rbt.treepos do
+      rbt:choptree()
+    end
+  end
 end

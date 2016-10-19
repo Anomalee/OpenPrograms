@@ -54,7 +54,7 @@ Me.Robit = {
           startmove,
           prevmove,
           targetpos,
-          treefound,
+          treepos,
           treeheight,
           patrolpath,
           pathindex
@@ -181,10 +181,10 @@ function Me.Robit:navigate (targetpos)
     end
   end
   while #availchoices > 0 do
-    print('dists', unpack(choicedists))
     choice = getindex(choicedists, math.min(table.unpack(choicedists)))
     self:turn_topos(availchoices[choice])
-    if robot.detect() then
+    print('choice', availchoices[choice].x, availchoices[choice].y)
+    if robot.detect(availchoices[choice]) then
       table.remove(availchoices, choice)
       table.remove(choicedists, choice)
     else
@@ -193,7 +193,7 @@ function Me.Robit:navigate (targetpos)
   end
   if #availchoices == 0 then
     if self.prevmove then
-      self:turntopoint(self.prevmove.pos)
+      self:turn_topos(self.prevmove.pos)
       thismove = self.prevmove
     else
       return
@@ -204,6 +204,21 @@ function Me.Robit:navigate (targetpos)
 end
 
 function Me.Robit:patrol (arg)
+  local function inpatrolarea(pos)
+    xrange = {startpos.x, startpos.x+l}
+    yrange = {startpos.y, startpos.y+w}
+    if pos.x >= min(table.unpack(xrange)) and 
+    pos.x <= max(table.unpack(xrange)) then
+      if pos.y >= min(table.unpack(yrange)) and
+      pos.y <= max(table.unpack(yrange)) then
+        return true
+      else
+        return false
+      end
+    else
+      return false
+    end
+  end
   if self.patrolpath == nil then
     if arg.startpos == nil then
       startpos = self.pos
@@ -223,16 +238,27 @@ function Me.Robit:patrol (arg)
     maxpatrols = arg.n
   end
   while true do
-    if pointcompare(self.pos, self.patrolpath[self.pathindex]) then
-      if numpatrols and self.pathindex == 1 then
-        if numpatrols >= maxpatrols then
-          break
+    if arg.mode == 'trees' then
+      if not self.treepos then
+        tree = self:checkfortrees()
+        if tree then
+          self.treepos = tree
         end
-        numpatrols = numpatrols+1
       end
-      self.pathindex = (self.pathindex)%(#self.patrolpath)+1
-    end
-    self:navigate(self.patrolpath[self.pathindex])
+      if self.treepos then
+        self:choptree()
+      end
+    else
+      if pointcompare(self.pos, self.patrolpath[self.pathindex]) then
+        if numpatrols and self.pathindex == 1 then
+          if numpatrols >= maxpatrols then
+            break
+          end
+          numpatrols = numpatrols+1
+        end
+        self.pathindex = (self.pathindex)%(#self.patrolpath)+1
+      end
+      self:navigate(self.patrolpath[self.pathindex])
   end
   self.patrolpath = nil
 end
@@ -311,6 +337,53 @@ function Me.Robit:buildpatrolpath (startpos, area)
     end
   end
   return path
+end
+
+function Me.Robit:choptree ()
+  if not getdist(self.pos, self.treepos) == 1 then
+    self:navigateto(closestadjacent(self.pos, self.treepos))
+  elseif self.treeheight == nil then
+    self:turn_topos(self.treepos)
+    if self.isfacingtree() then
+      if robot.detectUp() then
+        robot.swingUp()
+      end
+      self:moveup()
+    else
+      self.treeheight = self.height-1
+    end
+  elseif self.height > self.treeheight then
+    self:movedown()
+  elseif self.height < self.treeheight then
+    self:moveup()
+  else
+    self:turn_topos(self.treepos)
+    if self:isfacingtree() then
+      self.swing()
+    end
+    self.treeheight -= 1
+  end
+  if self.treeheight == 0 then
+    self.treeheight = nil
+    self.treepos = nil
+  end
+end
+    
+function Me.Robit:isfacingtree()
+  robot.select(1)
+  return robot.compare()
+end
+        
+function Me.Robit:checkfortrees ()
+  if self:isfacingtree() then
+    return self:getforwardpos()
+  end
+  for i=1,4 do
+    if self.isfacingtree() then
+      return self:getforwardpos()
+    end
+    self:turn_right()
+  return nil
 end
 
 function pointcompare (p1, p2)
