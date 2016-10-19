@@ -50,7 +50,7 @@ end
 Me.Robit = {
           pos,
           height=1,
-          direction,
+          dir,
           startmove,
           prevmove,
           targetpos,
@@ -68,11 +68,11 @@ function Me.Robit:new (o)
 end
 
 function Me.Robit:moveforward ()
-  if self.direction == 0 then
+  if self.dir == 0 then
     self.pos.y = self.pos.y+1
-  elseif self.direction == 1 then
+  elseif self.dir == 1 then
     self.pos.x = self.pos.x-1
-  elseif self.direction == 2 then
+  elseif self.dir == 2 then
     self.pos.y = self.pos.y-1
   else
     self.pos.x = self.pos.x+1
@@ -91,25 +91,25 @@ function Me.Robit:movedown ()
 end
 
 function Me.Robit:turn_around ()
-  self.direction = (self.direction+2)%4
+  self.dir = (self.dir+2)%4
   robot.turnAround()
 end
 
 function Me.Robit:turn_right ()
-  self.direction = (self.direction+1)%4
+  self.dir = (self.dir+1)%4
   robot.turnRight()
 end
 
 function Me.Robit:turn_left ()
-  self.direction = (self.direction-1)%4
+  self.dir = (self.dir-1)%4
   robot.turnLeft()
 end
 
 function Me.Robit:turn_todir (targetdir)
-  if not (self.direction == targetdir) then
-    if (self.direction+2)%4 == targetdir then
+  if not (self.dir == targetdir) then
+    if (self.dir+2)%4 == targetdir then
       self:turn_around()
-    elseif (self.direction+1)%4 == targetdir then
+    elseif (self.dir+1)%4 == targetdir then
       self:turn_right()
     else
       self:turn_left()
@@ -126,11 +126,11 @@ end
 function Me.Robit:getforwardpos ()
   x = self.pos.x
   y = self.pos.y
-  if self.direction == 0 then
+  if self.dir == 0 then
     y = y+1
-  elseif self.direction == 1 then
+  elseif self.dir == 1 then
     x = x-1
-  elseif self.direction == 2 then
+  elseif self.dir == 2 then
     y = y-1
   else
     x = x+1
@@ -175,7 +175,7 @@ function Me.Robit:navigate(targetpos)
     end
   end
   while #availchoices > 0 do
-    choice = getindex(choicedists, math.min(unpack(choicedists)))
+    choice = getindex(choicedists, math.min(table.unpack(choicedists)))
     self:turn_topos(availchoices[choice])
     if robot.detect() then
       availchoices[choice] = nil
@@ -200,7 +200,7 @@ function Me.Robit:patrol (arg)
       startpos = arg.startpos
     end
     if arg.area == nil then
-      area = {w=1, h=1}
+      area = {l=1, w=1}
     else
       area = arg.area
     end
@@ -222,32 +222,32 @@ function Me.Robit:patrol (arg)
       self.pathindex = (self.pathindex)%(#self.patrolpath)+1
     end
     self:navigate(self.patrolpath[self.pathindex])
-    sleep(1)
   end
+  self.patrolpath = nil
 end
 
 function Me.Robit:buildpatrolpath (startpos, area)
   x0 = startpos.x
   y0 = startpos.y
+  l = area.l
   w = area.w
-  h = area.h
-  if w == 0 or h == 0 then
+  if l == 0 or w == 0 then
     return None
   end
-  if w < 0 then
+  if l < 0 then
       grid_xrange = {min=x0+w+1, max=x0}
   else
       grid_xrange = {min=x0, max=x0+w-1}
   end
-  if h < 0 then
+  if w < 0 then
       grid_yrange = {min=y0+h+1, max=y0}
   else
       grid_yrange = {min=y0, max=y0+h-1}
   end
   path = {}
-  heading = {EW=sign(w), NS=sign(h)}
-  if w >= h then
-      pos = {para=x0, perp=y0+sign(h)}
+  heading = {EW=sign(l), NS=sign(w)}
+  if l >= w then
+      pos = {para=x0, perp=y0+sign(w)}
       path[1] = {x=pos.para, y=pos.perp}
       patroldir = 'EW'
       gridrange_para = grid_xrange
@@ -255,7 +255,7 @@ function Me.Robit:buildpatrolpath (startpos, area)
       heading_para = heading.EW
       heading_perp = heading.NS
   else
-      pos = {perp=x0+sign(w), para=y0}
+      pos = {perp=x0+sign(l), para=y0}
       path[1] = {x=pos.perp, y=pos.para}
       patroldir = 'NS'
       gridrange_para = grid_yrange
@@ -369,11 +369,6 @@ end
 function sleep(n)
   local t0 = clock()
   while clock()-t0 <= n do end
-end
-
-function Me.dopatrol (direction, area, n)
-  rbt = Me.Robit:new{pos={x=0, y=0}, direction=direction}
-  rbt:patrol{area=area, n=n}
 end
 
 return Me
