@@ -140,11 +140,11 @@ end
 
 function Me.Robit:moveto (targetpos)
   while not pointcompare(self.pos, targetpos) do
-    self.navigate(targetpos)
+    self:navigate(targetpos)
   end
 end
 
-function Me.Robit:navigate(targetpos)
+function Me.Robit:navigate (targetpos)
   if pointcompare(self.pos, targetpos) and self.height == 1 then
     return True
   end
@@ -181,18 +181,23 @@ function Me.Robit:navigate(targetpos)
     end
   end
   while #availchoices > 0 do
+    print('dists', unpack(choicedists))
     choice = getindex(choicedists, math.min(table.unpack(choicedists)))
     self:turn_topos(availchoices[choice])
     if robot.detect() then
-      availchoices[choice] = nil
-      choicedists[choice] = nil
+      table.remove(availchoices, choice)
+      table.remove(choicedists, choice)
     else
       break
     end
   end
   if #availchoices == 0 then
-    self:turntopoint(self.prevmove.pos)
-    thismove = self.prevmove
+    if self.prevmove then
+      self:turntopoint(self.prevmove.pos)
+      thismove = self.prevmove
+    else
+      return
+    end
   end
   self:moveforward()
   self.prevmove = thismove
