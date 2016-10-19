@@ -238,6 +238,7 @@ function Me.Robit:patrol (arg)
     maxpatrols = arg.n
   end
   while true do
+    skippatrol = false
     if arg.mode == 'trees' then
       if not self.treepos then
         tree = self:checkfortrees()
@@ -247,8 +248,10 @@ function Me.Robit:patrol (arg)
       end
       if self.treepos then
         self:choptree()
+        skippatrol = true
       end
-    else
+    end
+    if not skippatrol then
       if pointcompare(self.pos, self.patrolpath[self.pathindex]) then
         if numpatrols and self.pathindex == 1 then
           if numpatrols >= maxpatrols then
@@ -259,6 +262,7 @@ function Me.Robit:patrol (arg)
         self.pathindex = (self.pathindex)%(#self.patrolpath)+1
       end
       self:navigate(self.patrolpath[self.pathindex])
+    end
   end
   self.patrolpath = nil
 end
