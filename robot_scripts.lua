@@ -183,7 +183,6 @@ function Me.Robit:navigate (targetpos)
   while #availchoices > 0 do
     choice = getindex(choicedists, math.min(table.unpack(choicedists)))
     self:turn_topos(availchoices[choice])
-    print('choice', availchoices[choice].x, availchoices[choice].y)
     if robot.detect(availchoices[choice]) then
       table.remove(availchoices, choice)
       table.remove(choicedists, choice)
@@ -363,7 +362,7 @@ function Me.Robit:choptree ()
   else
     self:turn_topos(self.treepos)
     if self:isfacingtree() then
-      self.swing()
+      robot.swing()
     end
     self.treeheight = self.treeheight-1
   end
@@ -387,6 +386,7 @@ function Me.Robit:checkfortrees ()
       return self:getforwardpos()
     end
     self:turn_right()
+  end
   return nil
 end
 

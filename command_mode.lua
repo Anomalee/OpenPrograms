@@ -23,9 +23,11 @@ while true do
     print("Enter patrol width (y): ")
     w = tonumber(io.read())
     area = {l=l, w=w}
+    print("Mode (trees, or none)")
+    mode = io.read()
     print("Enter patrol count (0 for infinite): ")
     n = tonumber(io.read())
-    rbt:patrol{startpos=startpos, area=area, n=n}
+    rbt:patrol{startpos=startpos, area=area, n=n, mode=mode}
   end
   if s == "moveto" then
     print("Enter target x: ")
