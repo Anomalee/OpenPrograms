@@ -138,6 +138,12 @@ function Me.Robit:getforwardpos ()
   return {x=x, y=y}
 end
 
+function Me.Robit:moveto (targetpos)
+  while not pointcompare(self.pos, targetpos) do
+    self.navigate(targetpos)
+  end
+end
+
 function Me.Robit:navigate(targetpos)
   if pointcompare(self.pos, targetpos) and self.height == 1 then
     return True
@@ -235,14 +241,14 @@ function Me.Robit:buildpatrolpath (startpos, area)
     return None
   end
   if l < 0 then
-      grid_xrange = {min=x0+w+1, max=x0}
+      grid_xrange = {min=x0+l+1, max=x0}
   else
-      grid_xrange = {min=x0, max=x0+w-1}
+      grid_xrange = {min=x0, max=x0+l-1}
   end
   if w < 0 then
-      grid_yrange = {min=y0+h+1, max=y0}
+      grid_yrange = {min=y0+w+1, max=y0}
   else
-      grid_yrange = {min=y0, max=y0+h-1}
+      grid_yrange = {min=y0, max=y0+w-1}
   end
   path = {}
   heading = {EW=sign(l), NS=sign(w)}

@@ -2,27 +2,37 @@ package.path = package.path .. ";C:/Users/seven_000/zerobrane/OpenPrograms/?.lua
 local rs = require("robot_scripts")
 
 print("Enter direction: ")
-dir = io.read("*n")
+dir = tonumber(io.read())
 print("Enter x pos: ")
-x = io.read("*n")
+x = tonumber(io.read())
 print("Enter y pos: ")
-y = io.read("*n")
+y = tonumber(io.read())
 rbt = rs.Robit:new{dir=dir, pos={x=x, y=y}}
 while true do
   print("Awaiting command: ")
   s = io.read()
+  print(s)
   if s == "patrol" then
     print("Enter patrol start pos x: ")
-    x = io.read("*n")
+    x = tonumber(io.read())
     print("Enter patrol start pos y: ")
-    y = io.read("*n")
+    y = tonumber(io.read())
+    startpos = {x=x, y=y}
     print("Enter patrol length (x): ")
-    l = io.read("*n")
+    l = tonumber(io.read())
     print("Enter patrol width (y): ")
-    w = io.read("*n")
+    w = tonumber(io.read())
     area = {l=l, w=w}
     print("Enter patrol count (0 for infinite): ")
-    n = io.read("*n")
-    rbt:patrol{area=area, n=n}
+    n = tonumber(io.read())
+    rbt:patrol{startpos=startpos, area=area, n=n}
+  end
+  if s == "moveto" then
+    print("Enter target x: ")
+    x = tonumber(io.read())
+    print("Enter target y: ")
+    y = tonumber(io.read())
+    pos = {x=x, y=y}
+    rbt:moveto(pos)
   end
 end
