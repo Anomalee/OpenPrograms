@@ -365,7 +365,7 @@ function Me.Robit:choptree ()
     if self:isfacingtree() then
       self.swing()
     end
-    self.treeheight -= 1
+    self.treeheight = self.treeheight-1
   end
   if self.treeheight == 0 then
     self.treeheight = nil
